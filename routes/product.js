@@ -7,7 +7,7 @@ const router = express.Router();
 /**
  * CREATE Product
  */
-router.post("/create-product", upload.single("image"), async (req, res) => {
+router.post("/product", upload.single("image"), async (req, res) => {
   try {
     const { name, price, description, features } = req.body;
 
@@ -62,7 +62,7 @@ router.get("/product/:id", async (req, res) => {
 /**
  * UPDATE Product by ID
  */
-router.put("/update-product/:id", upload.single("image"), async (req, res) => {
+router.put("/product/:id", upload.single("image"), async (req, res) => {
   try {
     const { name, price, description, features } = req.body;
 
