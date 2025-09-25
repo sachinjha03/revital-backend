@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+require("dotenv").config();
 require("./connection/db")
 const PORT = process.env.PORT||7000
 const app = express()
@@ -7,7 +8,7 @@ const app = express()
 const allowedOrigins = [
   'http://localhost:5173', // Client-side frontend URL
   'http://localhost:5174', // Admin panel URL (adjust as needed)
-  'https://revital-phsyio.netlify.app/'
+  'https://revital-phsyio.netlify.app'
 ];
 
 app.use(cors({
