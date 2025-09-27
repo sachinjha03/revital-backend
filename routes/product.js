@@ -7,26 +7,39 @@ const router = express.Router();
 /**
  * CREATE Product
  */
-router.post("/product", upload.single("image"), async (req, res) => {
+router.post("/product", upload.array("images", 4), async (req, res) => {
   try {
-    const { name, price, description, features } = req.body;
+    const {
+      name, category, availability,
+      oldPrice, newPrice, description,
+      disclaimer, quantity, features,
+    } = req.body;
 
     const newProduct = new Product({
       name,
-      price,
+      category,
+      availability,
+      oldPrice,
+      newPrice,
       description,
+      disclaimer,
+      quantity,
       features: features ? JSON.parse(features) : [],
-      image: req.file?.path, // Cloudinary provides secure URL
+      images: req.files.map(file => file.path), // ✅ secure Cloudinary URLs
     });
 
     await newProduct.save();
-    res
-      .status(201)
-      .json({ success: true, message: "Product created successfully", product: newProduct });
+    res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      product: newProduct,
+    });
   } catch (error) {
+    console.error("CREATE PRODUCT ERROR:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 
 /**
  * READ All Products
@@ -62,40 +75,55 @@ router.get("/product/:id", async (req, res) => {
 /**
  * UPDATE Product by ID
  */
-router.put("/product/:id", upload.single("image"), async (req, res) => {
+router.put("/product/:id", upload.array("images"), async (req, res) => {
   try {
-    const { name, price, description, features } = req.body;
-
-    const updatedData = {
-      name,
-      price,
-      description,
-      features: features ? JSON.parse(features) : [],
-    };
-
-    if (req.file) {
-      updatedData.image = req.file.path; // New Cloudinary URL
+    let existingImages = [];
+    if (req.body.existingImages) {
+      try {
+        existingImages = JSON.parse(req.body.existingImages);
+      } catch (e) {
+        console.error("Invalid existingImages JSON:", req.body.existingImages);
+      }
     }
 
-    const product = await Product.findByIdAndUpdate(
+    const imageIndexes = req.body["imageIndexes[]"]
+      ? Array.isArray(req.body["imageIndexes[]"])
+        ? req.body["imageIndexes[]"].map((i) => parseInt(i))
+        : [parseInt(req.body["imageIndexes[]"])]
+      : [];
+
+    const uploadedFiles = req.files || [];
+
+    // Start with existing images
+    let images = [...existingImages];
+
+    // Replace images at indexes with new uploads
+    uploadedFiles.forEach((file, i) => {
+      const idx = imageIndexes[i];
+      if (!isNaN(idx)) {
+        images[idx] = file.path; // replace specific index
+      } else {
+        images.push(file.path); // fallback → append
+      }
+    });
+
+    const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      updatedData,
+      {
+        ...req.body,
+        images,
+      },
       { new: true }
     );
 
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product Not Found" });
-    }
-
-    res
-      .status(200)
-      .json({ success: true, message: "Product updated successfully", product });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true, data: updatedProduct });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+
 
 /**
  * DELETE Product by ID

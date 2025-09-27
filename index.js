@@ -8,7 +8,8 @@ const app = express()
 const allowedOrigins = [
   'http://localhost:5173', // Client-side frontend URL
   'http://localhost:5174', // Admin panel URL (adjust as needed)
-  'https://revital-phsyio.netlify.app'
+  'https://revital-phsyio.netlify.app',
+  'https://revital-admin-panel.netlify.app/'
 ];
 
 app.use(cors({
